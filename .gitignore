@@ -19,3 +19,12 @@ htmlcov/
 # IDE
 .vscode/
 .idea/
+
+# archive folder
+archive/
+
+# raw data
+data/abstracts.csv
+
+# claudeignore
+.claudeignore

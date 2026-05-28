@@ -5,8 +5,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY docker_test.py .
+COPY data/abstracts.csv data/abstracts.csv
+COPY data/topic_labels.json data/topic_labels.json
+COPY main.py .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "docker_test:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
