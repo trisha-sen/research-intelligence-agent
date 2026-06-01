@@ -3,3 +3,4 @@ uvicorn[standard]==0.32.0
 psycopg2-binary
 python-dotenv
 asyncpg
+anthropic
