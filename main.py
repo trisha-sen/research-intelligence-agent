@@ -11,7 +11,10 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/research_db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL is None:
+    POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
+    DATABASE_URL = f"postgresql://postgres:{POSTGRES_PASSWORD}@localhost:5432/research_db"
 
 # --- Chatbot ---
 _anthropic = anthropic.AsyncAnthropic()

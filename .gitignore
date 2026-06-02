@@ -28,3 +28,6 @@ data/abstracts.csv
 
 # claudeignore
 .claudeignore
+
+# jupyter checkpoints
+.ipynb_checkpoints/

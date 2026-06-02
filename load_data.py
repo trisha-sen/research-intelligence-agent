@@ -10,7 +10,12 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 CSV_PATH = Path(os.environ.get("CSV_PATH", "data/abstracts.csv"))
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://localhost/research_db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL is None:
+    POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
+    DATABASE_URL = f"postgresql://postgres:{POSTGRES_PASSWORD}@localhost:5432/research_db"
+
+# print("\n URL is: \n", DATABASE_URL)
 
 conn = psycopg2.connect(DATABASE_URL)
 cur = conn.cursor()
@@ -25,7 +30,7 @@ cur.execute("""
         cited_by INTEGER,
         journal TEXT,
         year INTEGER,
-        topics JSONB,
+        topics INTEGER[],
         all_topic_prop JSONB
     )
 """)
@@ -50,7 +55,7 @@ with CSV_PATH.open(encoding="utf-8") as f:
             row.get("cited_by"),
             row["journal"],
             int(row["year"]),
-            json.dumps(ast.literal_eval(row["topics"])),
+            ast.literal_eval(row["topics"]),
             json.dumps(ast.literal_eval(row["all_topic_prop"])),
         )
         for row in csv.DictReader(f)
