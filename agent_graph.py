@@ -1,24 +1,21 @@
-import os
 from dotenv import load_dotenv
 import asyncio
-from typing import TypedDict
-from anthropic import AsyncAnthropic
 from langgraph.graph import StateGraph, START, END
 from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.runnables import RunnableConfig
-from agent_tools import search_by_topic, search_by_content
+from anthropic import AsyncAnthropic
+
+from config import (
+    ResearchState, CHAT_MODEL,
+    SUMMARISE_SYSTEM,
+    search_by_topic, search_by_content,
+    SEARCH_TOKEN, SUMMARISE_TOKEN,
+    SUMMARISE_TEMPERATURE
+)
 
 load_dotenv()
 
 client = AsyncAnthropic()
-CHAT_MODEL = "claude-haiku-4-5"
-
-# -- State Definition -----------------------------------------------------------
-class ResearchState(TypedDict):
-    question:       str
-    search_results: list[dict]
-    answer:         str
-
 
 # -- Tool schemas (Anthropic format) -------------------------------------------
 SEARCH_TOOL_SCHEMAS = [
@@ -65,16 +62,14 @@ TOOL_DISPATCH = {
     "search_by_content": search_by_content,
 }
 
-
 # -- Nodes ---------------------------------------------------------------------
-
 async def search_node(state: ResearchState) -> dict:
     """Let the LLM choose which search tool to use, then execute it."""
     print(f"  [search] '{state['question'][:60]}...'")
 
     response = await client.messages.create(
         model=CHAT_MODEL,
-        max_tokens=256,
+        max_tokens=SEARCH_TOKEN,
         tools=SEARCH_TOOL_SCHEMAS,
         messages=[{"role": "user", "content": state["question"]}],
     )
@@ -111,14 +106,8 @@ async def summarise_node(state: ResearchState, config: RunnableConfig) -> dict:
 
     async with client.messages.stream(
         model=CHAT_MODEL,
-        max_tokens=2048,
-        system=(
-            "You are a research assistant. Synthesise the provided paper abstracts "
-            "into a clear, structured answer to the research question. "
-            "Cite papers inline as (Author et al., YEAR) where the author is inferred "
-            "from the title. End with a References section listing: Title · DOI · Year. "
-            "Be concise - 3 to 5 paragraphs."
-        ),
+        max_tokens=SUMMARISE_TOKEN,
+        system=SUMMARISE_SYSTEM,
         messages=[
             {
                 "role": "user",
@@ -128,7 +117,7 @@ async def summarise_node(state: ResearchState, config: RunnableConfig) -> dict:
                 )
             }
         ],
-        temperature=0.3,
+        temperature=SUMMARISE_TEMPERATURE,
     ) as stream:
         async for text in stream.text_stream:
             await adispatch_custom_event("token", text, config=config)

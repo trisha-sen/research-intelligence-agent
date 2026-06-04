@@ -93,7 +93,7 @@ End the week with a real public URL on your existing AWS account.
   Add vector column to abstracts table. Embed corpus with sentence-transformers.
 - Hybrid search [DONE]
   Keyword + vector similarity in one SQL query. No separate service.
-- Semantic tool
+- Semantic tool [DONE]
   Agent now chooses: keyword, semantic, or hybrid per query.
 - MLflow tracking
   Log every run: query, docs, response, cost, method.
