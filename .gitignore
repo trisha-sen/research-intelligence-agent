@@ -25,6 +25,7 @@ archive/
 
 # raw data
 data/abstracts.csv
+models/
 
 # claudeignore
 .claudeignore
