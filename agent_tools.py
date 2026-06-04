@@ -5,11 +5,33 @@ import numpy as np
 
 load_dotenv()
 
-# -- Tool 1: keyword search over Postgres -------------------------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL is None:
     POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD")
     DATABASE_URL = f"postgresql://postgres:{POSTGRES_PASSWORD}@localhost:5432/research_db"
+
+import joblib, json
+from sentence_transformers import SentenceTransformer
+
+_nmf_model      = None
+_tfidf_vec      = None
+_topic_labels   = None
+_embed_model    = None
+
+def _get_embed_model() -> SentenceTransformer:
+    global _embed_model
+    if _embed_model is None:
+        _embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _embed_model
+
+def _load_models():
+    global _nmf_model, _tfidf_vec, _topic_labels
+    if _nmf_model is None:
+        _nmf_model    = joblib.load("models/nmf_model.pkl")
+        _tfidf_vec    = joblib.load("models/tfidf_vectorizer.pkl")
+        _topic_labels = json.load(open("models/topic_labels.json"))
+
+# -- keyword search over Postgres -------------------------------------
 
 async def search_abstracts(query: str, limit: int = 5) -> list[dict]:
     """Keyword search over the abstracts table."""
@@ -72,20 +94,44 @@ async def search_abstracts_by_topic(topic_id: int, limit: int = 10) -> list[dict
     ]
 
 
-# -- Tool 2: NMF topic inference -----------------------------------------------
+async def search_abstracts_hybrid(query: str, limit: int = 8, alpha: float = 0.5) -> list[dict]:
+    """Hybrid search: combines keyword (ILIKE) and vector cosine similarity in one SQL query.
+    alpha=1.0 → pure keyword, alpha=0.0 → pure semantic, alpha=0.5 → equal weight."""
+    emb = _get_embed_model().encode([query])[0].tolist()
+    emb_str = "[" + ",".join(str(x) for x in emb) + "]"
 
-import joblib, json
+    conn = await asyncpg.connect(DATABASE_URL)
+    rows = await conn.fetch(
+        """
+        SELECT doi, title, abstract, year, topics, cited_by,
+               (1 - (embedding <=> $2::vector)) AS vec_score,
+               CASE WHEN title ILIKE $1 OR abstract ILIKE $1 THEN 1.0 ELSE 0.0 END AS kw_score
+        FROM papers
+        ORDER BY (
+            $3 * (CASE WHEN title ILIKE $1 OR abstract ILIKE $1 THEN 1.0 ELSE 0.0 END)
+            + (1 - $3) * (1 - (embedding <=> $2::vector))
+        ) DESC
+        LIMIT $4
+        """,
+        f"%{query}%", emb_str, alpha, limit,
+    )
+    await conn.close()
+    return [
+        {
+            "doi":       r["doi"],
+            "title":     r["title"],
+            "abstract":  r["abstract"][:300] + "...",
+            "year":      r["year"],
+            "topics":    list(r["topics"]) if r["topics"] else [],
+            "cited_by":  r["cited_by"],
+            "vec_score": round(float(r["vec_score"]), 4),
+            "kw_score":  round(float(r["kw_score"]), 4),
+        }
+        for r in rows
+    ]
 
-_nmf_model      = None
-_tfidf_vec      = None
-_topic_labels   = None
 
-def _load_models():
-    global _nmf_model, _tfidf_vec, _topic_labels
-    if _nmf_model is None:
-        _nmf_model    = joblib.load("models/nmf_model.pkl")
-        _tfidf_vec    = joblib.load("models/tfidf_vectorizer.pkl")
-        _topic_labels = json.load(open("models/topic_labels.json"))
+# -- NMF topic inference -----------------------------------------------
 
 def classify_topic(text: str) -> dict:
     """Run NMF inference on a text string. Returns top topic label + all weights."""
@@ -101,7 +147,7 @@ def classify_topic(text: str) -> dict:
     }
 
 
-# -- Tool 3: topic trend by year -----------------------------------------------
+# -- topic trend by year -----------------------------------------------
 
 async def topic_trend(topic_id: int) -> dict:
     """Annual paper fraction for an NMF topic cluster (topic_id 0-19).

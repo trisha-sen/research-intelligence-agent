@@ -6,7 +6,7 @@ from anthropic import AsyncAnthropic
 from langgraph.graph import StateGraph, START, END
 from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.runnables import RunnableConfig
-from agent_tools import search_abstracts_by_topic, search_abstracts, classify_topic
+from agent_tools import search_abstracts_by_topic, search_abstracts_hybrid, classify_topic
 
 load_dotenv()
 
@@ -47,13 +47,13 @@ async def search_by_topic_node(state: ResearchState) -> dict:
     return {"topic_results": papers}
 
 
-async def search_by_keyword_node(state: ResearchState) -> dict:
-    """Retrieve papers via keyword search over title and abstract."""
-    print(f"  [search_by_keyword] query: '{state['question'][:60]}...'")
+async def search_hybrid_node(state: ResearchState) -> dict:
+    """Hybrid search: keyword + vector similarity combined in one SQL query."""
+    print(f"  [search_hybrid] query: '{state['question'][:60]}...'")
 
-    papers = await search_abstracts(query=state["question"], limit=8)
+    papers = await search_abstracts_hybrid(query=state["question"], limit=8)
 
-    print(f"  [search_by_keyword] --> {len(papers)} papers retrieved")
+    print(f"  [search_hybrid] --> {len(papers)} papers retrieved")
     return {"keyword_results": papers}
 
 async def summarise_node(state: ResearchState, config: RunnableConfig) -> dict:
@@ -113,16 +113,18 @@ async def summarise_node(state: ResearchState, config: RunnableConfig) -> dict:
 def build_graph():
     graph = StateGraph(ResearchState)
 
-    # Register nodes
-    graph.add_node("classify",  classify_node)
-    graph.add_node("search",    search_by_topic_node)
-    graph.add_node("summarise", summarise_node)
+    graph.add_node("classify",      classify_node)
+    graph.add_node("search_topic",  search_by_topic_node)
+    graph.add_node("search_hybrid", search_hybrid_node)
+    graph.add_node("summarise",     summarise_node)
 
-    # Wire edges - linear for now
-    graph.add_edge(START,        "classify")
-    graph.add_edge("classify",   "search")
-    graph.add_edge("search",     "summarise")
-    graph.add_edge("summarise",  END)
+    # classify fans out to both searches in parallel, then merge into summarise
+    graph.add_edge(START,           "classify")
+    graph.add_edge("classify",      "search_topic")
+    graph.add_edge("classify",      "search_hybrid")
+    graph.add_edge("search_topic",  "summarise")
+    graph.add_edge("search_hybrid", "summarise")
+    graph.add_edge("summarise",     END)
 
     return graph.compile()
 

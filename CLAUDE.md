@@ -89,9 +89,9 @@ Week 3 · pgvector, MLflow & cloud
 Replace TF-IDF with embeddings and measure the difference.
 End the week with a real public URL on your existing AWS account.
 
-- pgvector setup
+- pgvector setup [DONE]
   Add vector column to abstracts table. Embed corpus with sentence-transformers.
-- Hybrid search
+- Hybrid search [DONE]
   Keyword + vector similarity in one SQL query. No separate service.
 - Semantic tool
   Agent now chooses: keyword, semantic, or hybrid per query.

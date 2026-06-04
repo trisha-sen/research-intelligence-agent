@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from agent_graph import ask_stream
+from agent_tools import search_abstracts_hybrid
 
 load_dotenv()
 
@@ -109,6 +110,21 @@ async def search(
             }
             for r in rows
         ],
+    }
+
+
+@app.get("/search/hybrid")
+async def search_hybrid(
+    q: str = Query(..., min_length=1, description="Search query"),
+    alpha: float = Query(0.5, ge=0.0, le=1.0, description="Keyword weight (0=semantic, 1=keyword)"),
+    limit: int = Query(20, ge=1, le=200),
+):
+    results = await search_abstracts_hybrid(query=q, limit=limit, alpha=alpha)
+    return {
+        "query": q,
+        "alpha": alpha,
+        "returned": len(results),
+        "results": results,
     }
 
 

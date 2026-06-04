@@ -24,7 +24,7 @@ htmlcov/
 archive/
 
 # raw data
-data/abstracts.csv
+data/
 models/
 
 # claudeignore
