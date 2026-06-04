@@ -15,9 +15,9 @@ SYSTEM_PROMPT = """You are a research assistant with access to a corpus of 33K M
 journal abstracts. When answering research questions:
 1. First classify the question's topic using classify_topic to get a topic ID.
 2. Search for relevant papers using both:
-   - search_abstracts_by_topic(topic_id) — finds papers where that NMF topic is
+   - search_abstracts_by_topic(topic_id) - finds papers where that NMF topic is
      dominant; prefer this for broad topic overviews.
-   - search_abstracts(query) — keyword search; prefer this for specific methods,
+   - search_abstracts(query) - keyword search; prefer this for specific methods,
      terms, or when the topic search returns insufficient results.
    Use both when the question has both a clear topic and specific keywords.
 3. Synthesise the results into a clear answer with paper citations (title + year).
@@ -35,7 +35,7 @@ async def dispatch_tool(name: str, args: dict) -> str:
     elif name == "search_abstracts":
         result = await search_abstracts(**args)
     elif name == "classify_topic":
-        result = classify_topic(**args)        # sync — NMF is fast
+        result = classify_topic(**args)        # sync - NMF is fast
     else:
         result = {"error": f"Unknown tool: {name}"}
     return json.dumps(result)
@@ -91,7 +91,7 @@ async def run_agent(question: str, max_steps: int = 10) -> str:
             # Feed all results back in a single user message
             messages.append({"role": "user", "content": tool_results})
 
-        # -- Case 2: model is done — final answer ------------------------------
+        # -- Case 2: model is done - final answer ------------------------------
         elif stop_reason == "end_turn":
             answer = next(
                 (block.text for block in response.content if block.type == "text"),

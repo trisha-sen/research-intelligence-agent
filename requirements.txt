@@ -7,3 +7,8 @@ anthropic
 numpy
 scikit-learn
 joblib
+langgraph==1.2.4
+langchain-core
+mcp
+pgvector
+sentence-transformers

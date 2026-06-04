@@ -37,7 +37,7 @@ TOOL_SCHEMAS = [
             "properties": {
                 "text": {
                     "type": "string",
-                    "description": "Text to classify — a question, abstract, or any research text"
+                    "description": "Text to classify - a question, abstract, or any research text"
                 }
             },
             "required": ["text"]

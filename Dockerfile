@@ -6,9 +6,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY data/abstracts.csv data/abstracts.csv
-COPY data/topic_labels.json data/topic_labels.json
+COPY models/ models/
 COPY main.py .
 COPY load_data.py .
+COPY agent_tools.py .
+COPY agent_tools_lg.py .
+COPY agent_graph.py .
+COPY embed_corpus.py .
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 

@@ -1,4 +1,3 @@
-# tools.py
 import os
 from dotenv import load_dotenv
 import asyncpg
@@ -99,4 +98,36 @@ def classify_topic(text: str) -> dict:
         "top_topic_label": _topic_labels[str(top_id)],
         "confidence":      round(float(weights[top_id]), 4),
         "all_weights":     [round(float(w), 4) for w in weights],
+    }
+
+
+# -- Tool 3: topic trend by year -----------------------------------------------
+
+async def topic_trend(topic_id: int) -> dict:
+    """Annual paper fraction for an NMF topic cluster (topic_id 0-19).
+    Returns topic_id, topic_label, and trend {year: fraction_of_all_papers}."""
+    if not (0 <= topic_id <= 19):
+        raise ValueError(f"topic_id must be 0-19, got {topic_id}")
+    conn = await asyncpg.connect(DATABASE_URL)
+    try:
+        rows = await conn.fetch(
+            """
+            SELECT
+                year,
+                COUNT(*) FILTER (WHERE $1 = ANY(topics)) AS topic_count,
+                COUNT(*)                                  AS year_total
+            FROM papers
+            GROUP BY year
+            HAVING COUNT(*) FILTER (WHERE $1 = ANY(topics)) > 0
+            ORDER BY year ASC
+            """,
+            topic_id,
+        )
+    finally:
+        await conn.close()
+    _load_models()
+    return {
+        "topic_id":    topic_id,
+        "topic_label": _topic_labels[str(topic_id)],
+        "trend":       {r["year"]: round(r["topic_count"] / r["year_total"], 4) for r in rows},
     }

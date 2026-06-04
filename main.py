@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from agent_graph import ask_stream
+
 load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -34,6 +36,9 @@ Your responses should:
 """
 
 conversations: dict[str, list[dict]] = defaultdict(list)
+
+class ResearchRequest(BaseModel):
+    question: str
 
 class ChatRequest(BaseModel):
     session_id: str
@@ -105,6 +110,11 @@ async def search(
             for r in rows
         ],
     }
+
+
+@app.post("/research")
+async def research(request: ResearchRequest):
+    return StreamingResponse(ask_stream(request.question), media_type="text/plain")
 
 
 @app.post("/chat")
