@@ -1,0 +1,22 @@
+{
+  "0": "Neural Network Compression & Pruning",
+  "1": "Event-Triggered Control Systems",
+  "2": "Graph Neural Networks (GNNs)",
+  "3": "Attention Mechanisms & Feature Fusion",
+  "4": "Multi-View Clustering (MVC)",
+  "5": "Domain Adaptation & Transfer Learning",
+  "6": "Time Series Forecasting & Prediction",
+  "7": "Multimodal Large Language Models (MLLMs)",
+  "8": "Image Restoration & Diffusion Models",
+  "9": "Semi-Supervised & Multi-Label Classification",
+  "10": "Medical Image Segmentation",
+  "11": "Anomaly Detection & Object Detection",
+  "12": "Federated Learning & Data Privacy",
+  "13": "Adversarial Attacks & Robustness",
+  "14": "3D Point Cloud Processing & Pose Estimation",
+  "15": "Combinatorial Optimisation & Search Algorithms",
+  "16": "Video Understanding & Spatiotemporal Analysis",
+  "17": "Knowledge Distillation & Model Compression",
+  "18": "Recommender Systems & Collaborative Filtering",
+  "19": "Fuzzy Logic & Multi-Criteria Decision Making"
+}

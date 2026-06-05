@@ -10,8 +10,9 @@ COPY models/ models/
 COPY main.py .
 COPY load_data.py .
 COPY agent_tools.py .
-COPY agent_tools_lg.py .
+COPY agent_config.py .
 COPY agent_graph.py .
+COPY mlflow_tracking.py .
 COPY embed_corpus.py .
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh

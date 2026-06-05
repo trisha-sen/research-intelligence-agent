@@ -32,7 +32,7 @@ Your responses should:
 - Be technically accurate and use correct ML terminology
 - Distinguish between established results and open research questions
 - Mention relevant sub-fields, methods, or landmark papers where appropriate
-- Be concise — prefer 1-3 focused paragraphs over exhaustive lists
+- Be concise - prefer 1-3 focused paragraphs over exhaustive lists
 - Acknowledge uncertainty rather than confabulate
 """
 

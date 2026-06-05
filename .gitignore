@@ -32,3 +32,7 @@ models/
 
 # jupyter checkpoints
 .ipynb_checkpoints/
+
+# mlflow
+mlruns/
+mlflow.db

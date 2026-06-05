@@ -1,17 +1,19 @@
 from dotenv import load_dotenv
 import asyncio
+import time
 from langgraph.graph import StateGraph, START, END
 from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.runnables import RunnableConfig
 from anthropic import AsyncAnthropic
 
-from config import (
+from agent_config import (
     ResearchState, CHAT_MODEL,
     SUMMARISE_SYSTEM,
     search_by_topic, search_by_content,
     SEARCH_TOKEN, SUMMARISE_TOKEN,
     SUMMARISE_TEMPERATURE
 )
+from mlflow_tracking import log_research_run
 
 load_dotenv()
 
@@ -65,6 +67,7 @@ TOOL_DISPATCH = {
 # -- Nodes ---------------------------------------------------------------------
 async def search_node(state: ResearchState) -> dict:
     """Let the LLM choose which search tool to use, then execute it."""
+    start_time = time.time()
     print(f"  [search] '{state['question'][:60]}...'")
 
     response = await client.messages.create(
@@ -76,9 +79,14 @@ async def search_node(state: ResearchState) -> dict:
 
     seen: set[str] = set()
     papers: list[dict] = []
+    search_method = "unknown"
+    search_params: dict = {}
 
     for block in response.content:
         if block.type == "tool_use":
+            if search_method == "unknown":
+                search_method = block.name
+                search_params = dict(block.input)
             print(f"  [search] --> {block.name}({block.input})")
             results = await TOOL_DISPATCH[block.name](**block.input)
             for p in results:
@@ -87,7 +95,14 @@ async def search_node(state: ResearchState) -> dict:
                     papers.append(p)
 
     print(f"  [search] --> {len(papers)} papers retrieved")
-    return {"search_results": papers}
+    return {
+        "search_results":   papers,
+        "search_method":    search_method,
+        "search_params":    search_params,
+        "search_tokens_in": response.usage.input_tokens,
+        "search_tokens_out":response.usage.output_tokens,
+        "run_start_time":   start_time,
+    }
 
 
 async def summarise_node(state: ResearchState, config: RunnableConfig) -> dict:
@@ -122,9 +137,22 @@ async def summarise_node(state: ResearchState, config: RunnableConfig) -> dict:
         async for text in stream.text_stream:
             await adispatch_custom_event("token", text, config=config)
             chunks.append(text)
+        final_msg = await stream.get_final_message()
 
     answer = "".join(chunks)
     print(f"  [summarise] --> done ({len(answer)} chars)")
+
+    await asyncio.to_thread(
+        log_research_run,
+        {
+            **state,
+            "answer":               answer,
+            "summarise_tokens_in":  final_msg.usage.input_tokens,
+            "summarise_tokens_out": final_msg.usage.output_tokens,
+        },
+        time.time(),
+    )
+
     return {"answer": answer}
 
 

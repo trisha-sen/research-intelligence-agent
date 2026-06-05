@@ -95,10 +95,17 @@ End the week with a real public URL on your existing AWS account.
   Keyword + vector similarity in one SQL query. No separate service.
 - Semantic tool [DONE]
   Agent now chooses: keyword, semantic, or hybrid per query.
-- MLflow tracking
+- MLflow tracking [DONE]
   Log every run: query, docs, response, cost, method.
-- Deploy to AWS
-  ECR + App Runner. Real public URL on your existing AWS account.
 Ship: hybrid search (keyword + pgvector) in one Postgres query, MLflow tracking,
-deployed to AWS. Keyword vs semantic comparison documented with numbers.
-agent is live in the cloud
+Agent is live
+
+Week 4:
+retrieval evaluation script that measures Precision@10 for three retrieval methods — keyword, semantic (pgvector), and hybrid — using NMF cluster labels as ground truth.
+For each query about topic X, score the top-10 retrieved abstracts using all_topic_prop[X] as a weighted relevance score rather than binary hit/miss.
+I want to paste something like this into readme:
+| Method   | Mean P@10 | Min  | Max  |
+|----------|-----------|------|------|
+| keyword  | 0.312     | 0.08 | 0.61 |
+| semantic | 0.438     | 0.14 | 0.72 |
+| hybrid   | 0.491     | 0.19 | 0.75 |

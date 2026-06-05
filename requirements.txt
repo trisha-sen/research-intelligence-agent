@@ -13,3 +13,4 @@ langchain-anthropic
 mcp
 pgvector
 sentence-transformers
+mlflow

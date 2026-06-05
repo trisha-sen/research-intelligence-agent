@@ -103,14 +103,14 @@ async def search_abstracts_hybrid(query: str, limit: int = 8, alpha: float = 0.5
     conn = await asyncpg.connect(DATABASE_URL)
     rows = await conn.fetch(
         """
-        SELECT doi, title, abstract, year, topics, cited_by,
+        SELECT doi, title, abstract, year, topics, cited_by, all_topic_prop,
                (1 - (embedding <=> $2::vector)) AS vec_score,
                CASE WHEN title ILIKE $1 OR abstract ILIKE $1 THEN 1.0 ELSE 0.0 END AS kw_score
         FROM papers
         ORDER BY (
             $3 * (CASE WHEN title ILIKE $1 OR abstract ILIKE $1 THEN 1.0 ELSE 0.0 END)
             + (1 - $3) * (1 - (embedding <=> $2::vector))
-        ) DESC
+        ) DESC, cited_by DESC
         LIMIT $4
         """,
         f"%{query}%", emb_str, alpha, limit,
@@ -124,8 +124,9 @@ async def search_abstracts_hybrid(query: str, limit: int = 8, alpha: float = 0.5
             "year":      r["year"],
             "topics":    list(r["topics"]) if r["topics"] else [],
             "cited_by":  r["cited_by"],
-            "vec_score": round(float(r["vec_score"]), 4),
-            "kw_score":  round(float(r["kw_score"]), 4),
+            "vec_score":      round(float(r["vec_score"]), 4),
+            "kw_score":       round(float(r["kw_score"]), 4),
+            "all_topic_prop": json.loads(r["all_topic_prop"]) if r["all_topic_prop"] else [],
         }
         for r in rows
     ]

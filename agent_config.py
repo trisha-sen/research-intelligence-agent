@@ -2,6 +2,9 @@ from typing import TypedDict
 from agent_tools import classify_topic, search_abstracts_by_topic, search_abstracts_hybrid
 
 CHAT_MODEL = "claude-haiku-4-5"
+SEARCH_TOKEN = 2048
+SUMMARISE_TOKEN = 1024
+SUMMARISE_TEMPERATURE = 0.3
 SUMMARISE_SYSTEM = (
     "You are a research assistant. Synthesise the provided paper abstracts "
     "into a clear, structured answer to the research question. "
@@ -9,15 +12,18 @@ SUMMARISE_SYSTEM = (
     "from the title. End with a References section listing: Title · DOI · Year. "
     "Be concise - 3 to 5 paragraphs."
 )
-SEARCH_TOKEN = 2048
-SUMMARISE_TOKEN = 1024
-SUMMARISE_TEMPERATURE = 0.3
 
 # -- State Definition -----------------------------------------------------------
-class ResearchState(TypedDict):
+class _ResearchStateRequired(TypedDict):
     question:       str
     search_results: list[dict]
     answer:         str
+
+class ResearchState(_ResearchStateRequired, total=False):
+    run_start_time:   float
+    search_method:    str
+    search_tokens_in: int
+    search_tokens_out:int
 
 # -- consolidated agent-facing wrappers -----------------------------------------
 
