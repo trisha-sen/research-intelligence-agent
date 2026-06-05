@@ -8,6 +8,8 @@ This is what that looks like. Given any research question, the agent figures out
 
 Built with Anthropic's Claude API and LangGraph.
 
+<img width="1414" height="609" alt="Screenshot 2026-06-04 215706" src="https://github.com/user-attachments/assets/1ce95883-1615-434d-9532-e6e775c702ea" />
+
 ---
 
 ## How the agent searches
