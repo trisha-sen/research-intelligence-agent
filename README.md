@@ -1,28 +1,42 @@
 # Research Intelligence Agent
 
-A research Q&A system built on 21K ML journal abstracts. The agent retrieves relevant papers and synthesises cited answers using a LangGraph pipeline backed by Postgres + pgvector. Retrieval quality is evaluated with a principled metric: weighted Precision@10 using NMF topic weights as continuous relevance scores - comparing TF-IDF keyword search, sentence-transformer embeddings, and a hybrid of both.
+This project makes a corpus of 21K ML journal abstracts actually useful to talk to.
+
+The starting point was an [earlier project](https://github.com/trisha-sen/machine_learning_journal_topic_analysis) where I scraped abstracts from top ML journals and used NMF topic modelling to map the landscape of ML research - identifying 20 topic clusters, tracking trends over time, and surfacing seminal works within each cluster. That analysis was interesting, but the output was static. The natural next question was: *can I just ask it things?*
+
+This is what that looks like. Given any research question, the agent figures out how to search the corpus - whether to use semantic embeddings to find nearest neighbours, or to classify the query into one of the 20 NMF topic clusters and retrieve papers that way - then synthesises the retrieved abstracts into a cited answer. Papers that received higher citations are weighted more heavily in the synthesis. A full reference list with DOIs appears at the end of every response.
+
+Built with Anthropic's Claude API and LangGraph.
 
 ---
 
-## NMF topic model
+## How the agent searches
 
-The 20 topics were fit on the full 21K abstract corpus using scikit-learn's NMF with a TF-IDF input matrix. Each paper stores:
+The agent has two retrieval tools and decides at runtime which to use:
 
-- `topics` - top 3 topic IDs ordered by weight
-- `all_topic_prop` - full 20-dimensional weight vector
+- **Semantic search** - embeds the query using sentence-transformers and finds the closest abstracts in the pgvector index. Works well for conceptual or paraphrased questions where the exact words won't appear in papers.
+- **NMF topic search** - runs NMF inference on the query at request time to identify its closest topic cluster, then retrieves papers assigned to that cluster. No keyword matching required - the query "training across devices without sharing data" correctly maps to the federated learning cluster even though neither word appears in the cluster label.
 
-Selected topic labels:
+The two tools are complementary. Semantic search crosses topic boundaries; NMF topic search retrieves a coherent, topically pure set of papers. A hybrid scoring mode that combines both is also available.
+
+---
+
+## Topic model
+
+20 topics were fit on the full 21K abstract corpus using scikit-learn NMF with a TF-IDF input matrix. Each paper stores its top 3 topic IDs and a full 20-dimensional weight vector (`all_topic_prop`), so relevance to any topic is a continuous score between 0 and 1 - not a binary label.
+
+A selection of the learned clusters:
 
 | ID | Label |
 |---|---|
-| 2 | graph_neural_networks |
-| 3 | attention_mechanisms |
-| 10 | medical_image_segmentation |
-| 12 | federated_learning |
-| 17 | knowledge_distillation |
-| 18 | recommender_systems |
+| 2 | Graph Neural Networks |
+| 3 | Attention Mechanisms & Feature Fusion |
+| 10 | Medical Image Segmentation |
+| 12 | Federated Learning & Data Privacy |
+| 17 | Knowledge Distillation |
+| 18 | Recommender Systems |
 
-The agent's `search_by_topic` tool runs NMF inference on the incoming query at request time to map it to the closest topic cluster - no keyword match required.
+The full topic list is in [`models/topic_labels.json`](models/topic_labels.json).
 
 ---
 
@@ -55,6 +69,11 @@ The conceptual set is deliberately adversarial for keyword search.
 - Keyword search collapses on conceptual queries (P@10 = 0.051 vs 0.580 for semantic) - it can only match what it can literally see in the text.
 - Semantic search dominates across both query types, with a 10× improvement on conceptual queries.
 - Hybrid search tracks semantic closely but does not improve over pure semantic here. The binary keyword score (1.0 / 0.0 ILIKE match) contributes noise rather than signal when the query vocabulary differs from the abstract.
+---
+
+## Related
+
+The original topic modelling analysis - trends, seminal works, and the NMF methodology - is in the [earlier project](https://github.com/trisha-sen/machine_learning_journal_topic_analysis).
 
 ---
 
@@ -127,7 +146,7 @@ research_agent/
 - An Anthropic API key
 
 ### Setup
-
+To generate nmf and tfidf.pkl refer to [this notebook in the original repo](https://github.com/trisha-sen/machine_learning_journal_topic_analysis/blob/main/machine_learning_topic_analysis_main.ipynb). Sample abstract with 1 row per topic is provided in `data` folder.
 ```bash
 # 1. Clone and enter the repo
 git clone <repo-url> && cd research_agent
