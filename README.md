@@ -2,7 +2,7 @@
 
 This project makes a corpus of 21K ML journal abstracts actually useful to talk to.
 
-The starting point was an [earlier project](https://github.com/trisha-sen/machine_learning_journal_topic_analysis) where I scraped abstracts from top ML journals and used NMF topic modelling to map the landscape of ML research - identifying 20 topic clusters, tracking trends over time, and surfacing seminal works within each cluster. That analysis was interesting, but the output was static. The natural next question was: *can I just ask it things?*
+The starting point was an [earlier project](https://github.com/trisha-sen/machine_learning_journal_topic_analysis) where I scraped abstracts from top ML journals and used NMF topic modelling  (an unsupervised technique) to map the landscape of ML research - identifying 20 topic clusters, tracking trends over time, and surfacing seminal works within each cluster. That analysis was interesting, but the output was static. The natural next question was: *can I just ask it things?*
 
 This is what that looks like. Given any research question, the agent figures out how to search the corpus - whether to use semantic embeddings to find nearest neighbours, or to classify the query into one of the 20 NMF topic clusters and retrieve papers that way - then synthesises the retrieved abstracts into a cited answer. Papers that received higher citations are weighted more heavily in the synthesis. A full reference list with DOIs appears at the end of every response.
 

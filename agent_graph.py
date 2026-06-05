@@ -27,7 +27,7 @@ SEARCH_TOOL_SCHEMAS = [
             "Classify the query using NMF and retrieve papers assigned to that "
             "topic cluster. Best for broad thematic questions like 'what research "
             "exists on federated learning' or 'papers about graph neural networks'. "
-            "Uses pre-computed NMF topic assignments — fast and topic-coherent."
+            "Uses pre-computed NMF topic assignments - fast and topic-coherent."
         ),
         "input_schema": {
             "type": "object",
@@ -41,10 +41,18 @@ SEARCH_TOOL_SCHEMAS = [
     {
         "name": "search_by_content",
         "description": (
-            "Search abstract text directly using keyword matching, pgvector semantic "
-            "similarity, or a hybrid of both. Best for specific method names, authors, "
-            "conceptual questions that cross topic boundaries, or queries where exact "
-            "wording matters. Mode: 'keyword', 'semantic', or 'hybrid' (default)."
+            "Search abstract text using keyword matching, pgvector semantic similarity, "
+            "or a hybrid of both. "
+            "Semantic mode (mode='semantic') embeds the query and finds nearest neighbours "
+            "in vector space - it understands paraphrases and conceptual intent, so it works "
+            "even when the query uses different vocabulary than the abstracts. "
+            "Keyword mode (mode='keyword') is best for exact method names, author names, or "
+            "acronyms where the literal string must appear. "
+            "Hybrid mode (mode='hybrid') combines both signals and is a safe default when "
+            "the query mixes specific terms with broader context. "
+            "Prefer this tool over search_by_topic when the question crosses multiple topic "
+            "areas, when precision on a specific term matters, or when semantic similarity "
+            "to the query text is more important than topic-cluster coherence."
         ),
         "input_schema": {
             "type": "object",
