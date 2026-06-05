@@ -52,6 +52,3 @@ as ground truth (Precision@10 per topic), comparing TF-IDF vs embedding-based re
   def topic_weight(row, topic_id: int) -> float:
       return row["all_topic_prop"][topic_id]
   ```
-
----
-
